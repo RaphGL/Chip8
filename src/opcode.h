@@ -116,6 +116,12 @@ void chip8_op_cxkk(struct Chip8 *chip8);
 // If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen.
 void chip8_op_dxyn(struct Chip8 *chip8);
 
+// SKP Vx
+// Skip next instruction if key with the value of Vx is pressed.
+// Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
+void chip8_op_ex9e(struct Chip8 *chip8);
+
+
 // SKNP Vx
 // Skip next instruction if key with the value of Vx is not pressed.
 // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.

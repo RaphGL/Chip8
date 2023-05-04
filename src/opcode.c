@@ -164,7 +164,7 @@ void chip8_op_8xy5(struct Chip8 *chip8) {
 //If the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2.
 void chip8_op_8xy6(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
-    uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
+    // uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
     if (chip8->registers[Vx] & 1) {
         chip8->registers[VF] = 1;
@@ -196,7 +196,7 @@ void chip8_op_8xy7(struct Chip8 *chip8) {
 // If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is multiplied by 2.
 void chip8_op_8xye(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
-    uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
+    // uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
     if (chip8->registers[Vx] & 1) {
         chip8->registers[VF] = 1;
@@ -245,4 +245,148 @@ void chip8_op_cxkk(struct Chip8 *chip8) {
 
     int random = (rand() % 255) & kk;
     chip8->registers[Vx] = random;
+}
+
+// DRW Vx, Vy, nibble
+// Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+// The interpreter reads n bytes from memory, starting at the address stored in I.
+// These bytes are then displayed as sprites on screen at coordinates (Vx, Vy). Sprites are XORed onto the existing screen.
+// If this causes any pixels to be erased, VF is set to 1, otherwise it is set to 0.
+// If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen.
+void chip8_op_dxyn(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
+    uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
+    uint8_t n = chip8->inst & 0x000F;
+
+    const uint8_t x = chip8->registers[Vx] % VIDEO_W;
+    const uint8_t y = chip8->registers[Vy] % VIDEO_H;
+
+    for (size_t row = 0; row < n; row++) {
+        uint8_t sprite_byte = chip8->memory[chip8->index + row];
+        for (size_t col = 0; col < 8; col++) {
+            uint8_t pixel = sprite_byte & (0x80 >> col);
+            uint32_t *screen_pixel = &chip8->video[(y + row) * VIDEO_H + (x + col)];
+
+            if (pixel && *screen_pixel == 0xFFFFFF) {
+                chip8->registers[VF] = 1;
+            } else {
+
+            }
+
+            *screen_pixel  ^= 0xFFFFFF;
+        }
+    }
+}
+
+// SKP Vx
+// Skip next instruction if key with the value of Vx is pressed.
+// Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
+void chip8_op_ex9e(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
+
+    if (chip8->keypad[chip8->registers[Vx]]) {
+        chip8->pc += 2;
+    }
+}
+
+// SKNP Vx
+// Skip next instruction if key with the value of Vx is not pressed.
+// Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
+void chip8_op_exa1(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
+
+    if (!chip8->keypad[chip8->registers[Vx]]) {
+        chip8->pc += 2;
+    }
+}
+
+// LD Vx, DT
+// Set Vx = delay timer value.
+// The value of DT is placed into Vx.
+void chip8_op_fx07(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+    chip8->registers[Vx] = chip8->delay_timer;
+}
+
+// LD Vx, K
+// Wait for a key press, store the value of the key in Vx.
+// All execution stops until a key is pressed, then the value of that key is stored in Vx.
+void chip8_op_fx0a(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+
+    for (;;) {
+        for (int i = 0; i < KEYPADSIZ; i++) {
+            if (chip8->keypad[i]) {
+                chip8->registers[Vx] = i;
+                return;
+            }
+        }
+    }
+}
+
+// LD DT, Vx
+// Set delay timer = Vx.
+// DT is set equal to the value of Vx.
+void chip8_op_fx15(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+    chip8->delay_timer = chip8->registers[Vx];
+}
+
+// LD ST, Vx
+// Set sound timer = Vx.
+// ST is set equal to the value of Vx.
+void chip8_op_fx18(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+    chip8->sound_timer = chip8->registers[Vx];
+}
+
+// Fx1E - ADD I, Vx
+// Set I = I + Vx.
+// The values of I and Vx are added, and the results are stored in I.
+void chip8_op_fx1e(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+    chip8->index += chip8->registers[Vx];
+}
+
+// LD F, Vx
+// Set I = location of sprite for digit Vx.
+// The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4,
+// Display, for more information on the Chip-8 hexadecimal font.
+void chip8_op_fx29(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+    chip8->index = chip8->registers[Vx] * 5 + FONTADDR;
+}
+
+// LD B, Vx
+// Store BCD representation of Vx in memory locations I, I+1, and I+2.
+// The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I,
+// the tens digit at location I+1, and the ones digit at location I+2.
+void chip8_op_fx33(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+    uint8_t value = chip8->registers[Vx];
+    chip8->memory[chip8->index] = value % 1;
+    chip8->memory[chip8->index + 1] = value % 10;
+    chip8->memory[chip8->index + 2] = value % 100;
+}
+
+// LD [I], Vx
+// Store registers V0 through Vx in memory starting at location I.
+// The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I.
+void chip8_op_fx55(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+
+    for (uint8_t i = V0; i < Vx; i++) {
+        chip8->memory[chip8->index + i] = chip8->registers[i];
+    }
+}
+
+// LD Vx, [I]
+// Read registers V0 through Vx from memory starting at location I.
+// The interpreter reads values from memory starting at location I into registers V0 through Vx.
+void chip8_op_fx65(struct Chip8 *chip8) {
+    uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
+
+    for (uint8_t i = V0; i < Vx; i++) {
+        chip8->registers[i] = chip8->memory[chip8->index + i];
+    }
 }
