@@ -108,7 +108,6 @@ void chip8_op_bnnn(struct Chip8 *chip8);
 // The results are stored in Vx. See instruction 8xy2 for more information on AND.
 void chip8_op_cxkk(struct Chip8 *chip8);
 
-
 // DRW Vx, Vy, nibble
 // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
 // The interpreter reads n bytes from memory, starting at the address stored in I.
