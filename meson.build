@@ -11,6 +11,6 @@ deps = [
 
 executable(
   'chip8',
-  ['src/main.c', 'src/memory.c', 'src/opcode.c'],
+  ['src/main.c', 'src/cpu.c', 'src/opcode.c'],
   dependencies: deps
 )

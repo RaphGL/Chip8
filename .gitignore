@@ -2,6 +2,7 @@
 *.d
 *.ch8
 .cache
+.vscode
 
 # Object files
 *.o
