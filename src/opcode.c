@@ -1,6 +1,6 @@
-#include "memory.h"
 #include <string.h>
 #include <stdlib.h>
+#include "cpu.h"
 
 // CLS
 // Clear the display
@@ -20,7 +20,7 @@ void chip8_op_00ee(struct Chip8 *chip8) {
 // Jump to location nnn
 // Sets PC to nnn
 void chip8_op_1nnn(struct Chip8 *chip8) {
-    int8_t addr = chip8->inst & 0x0FFF;
+    uint16_t addr = chip8->inst & 0x0FFF;
     chip8->pc = addr;
 }
 
@@ -62,7 +62,7 @@ void chip8_op_4xkk(struct Chip8 *chip8) {
 // Increments PC by 2 if equal
 void chip8_op_5xy0(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
-    uint8_t Vy = chip8->inst & 0x00F0 >> 4;
+    uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
     if (chip8->registers[Vx] == chip8->registers[Vy]) {
         chip8->pc += 2;
@@ -182,13 +182,13 @@ void chip8_op_8xy7(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
     uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
-    if (chip8->registers[Vx] > chip8->registers[Vy]) {
+    if (chip8->registers[Vy] > chip8->registers[Vx]) {
         chip8->registers[VF] = 1;
     } else {
         chip8->registers[VF] = 0;
     }
 
-    chip8->registers[Vx] -= chip8->registers[Vy];
+    chip8->registers[Vx] = chip8->registers[Vy] - chip8->registers[Vx];
 }
 
 // SHL Vx {, Vy}
@@ -223,7 +223,7 @@ void chip8_op_9xy0(struct Chip8 *chip8) {
 // Set I = nnn.
 // The value of register I is set to nnn 
 void chip8_op_annn(struct Chip8 *chip8) {
-    uint8_t nnn = chip8->inst & 0x0FFF;
+    uint16_t nnn = chip8->inst & 0x0FFF;
     chip8->index = nnn;
 }
 
@@ -340,7 +340,7 @@ void chip8_op_fx18(struct Chip8 *chip8) {
     chip8->sound_timer = chip8->registers[Vx];
 }
 
-// Fx1E - ADD I, Vx
+// ADD I, Vx
 // Set I = I + Vx.
 // The values of I and Vx are added, and the results are stored in I.
 void chip8_op_fx1e(struct Chip8 *chip8) {

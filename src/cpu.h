@@ -54,5 +54,6 @@ extern const uint8_t chip8_font_set[FONTSETSIZ];
 
 struct Chip8 chip8_new(void);
 void chip8_load_rom(struct Chip8 *chip8, const char *restrict filename);
+void chip8_cycle(struct Chip8 *chip8);
 
 #endif

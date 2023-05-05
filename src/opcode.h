@@ -1,6 +1,6 @@
 #ifndef CHIP8_OPCODE
 #define CHIP8_OPCODE
-#include "memory.h"
+#include "cpu.h"
 
 // CLS
 // Clear the display
