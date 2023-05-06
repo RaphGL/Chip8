@@ -7,7 +7,7 @@ void test_instructions(struct Chip8 *chip8);
 int main(void)
 {
     struct Chip8 chip8 = chip8_new();
-    chip8_load_rom(&chip8, "./test_opcode.ch8");
+    chip8_load_rom(&chip8, "./c8_test.ch8");
 
     #ifndef NDEBUG
     test_instructions(&chip8);
@@ -207,14 +207,49 @@ void test_instructions(struct Chip8 *chip8) {
     assert(rnd >= 0 && rnd < 256);
 
     // DRW Vx, Vy, nibble
-    // TODO
+    chip8->registers[V2] = 2;
+    chip8->registers[V3] = 2;
+    chip8->inst = 0xD232;
+    chip8->index = 0;
+    chip8->memory[0] = 0xFF;
+    chip8->memory[1] = 0x0F;
+    chip8_op_dxyn(chip8);
+    for (size_t i = 0; i < 8; i++) {
+        assert(chip8->video[2 * VIDEO_W + (i + 2)] == 0xFFFFFFFF);
+    }
+    for (size_t i = 0; i < 4; i++) {
+        assert(chip8->video[3 * VIDEO_W + (i + 2)] == 0);
+    }
+    for (size_t i = 4; i < 8; i++) {
+        assert(chip8->video[3 * VIDEO_W + (i + 2)] == 0xFFFFFFFF);
+    }
     
     // SKP Vx
-    // TODO
+    chip8->keypad[5] = 1;
+    chip8->registers[V1] = 5;
+    chip8->inst = 0xE19E;
+    pc = chip8->pc;
+    chip8_op_ex9e(chip8);
+    assert(chip8->pc == pc + 2);
+
+    chip8->keypad[5] = 0;
+    pc = chip8->pc;
+    chip8_op_ex9e(chip8);
+    assert(chip8->pc == pc);
     
     // SKNP Vx
-    // TODO
-    
+    chip8->keypad[5] = 0;
+    chip8->registers[V1] = 5;
+    chip8->inst = 0xE19E;
+    pc = chip8->pc;
+    chip8_op_exa1(chip8);
+    assert(chip8->pc == pc + 2);
+
+    chip8->keypad[5] = 1;
+    pc = chip8->pc;
+    chip8_op_exa1(chip8);
+    assert(chip8->pc == pc);
+    chip8->keypad[5] = 0;
 
     // LD Vx, DT
     chip8->inst = 0xF207;
@@ -223,8 +258,12 @@ void test_instructions(struct Chip8 *chip8) {
     assert(chip8->registers[V2] == 255);
 
     // LD Vx, K
-    // TODO
-    
+    chip8->inst = 0xF80A;
+    chip8->keypad[10] = 1;
+    chip8_op_fx0a(chip8);
+    assert(chip8->registers[V8] == 0xA);
+    chip8->keypad[10] = 0;
+
     // LD DT, Vx
     chip8->inst = 0xF315;
     chip8->registers[V3] = 140;
@@ -245,15 +284,39 @@ void test_instructions(struct Chip8 *chip8) {
     assert(chip8->index == 13);
 
     // LD F, Vx
-    // TODO
+    chip8->inst = 0xFD29;
+    chip8->registers[VD] = 0xA;
+    chip8_op_fx29(chip8);
+    assert(chip8->index == (10 * 5 + FONTADDR));
     
     // LD B, Vx 
-    // TODO
+    chip8->inst = 0xFE33;
+    chip8->registers[VE] = 127;
+    chip8_op_fx33(chip8);
+    assert(chip8->memory[chip8->index] == 1);
+    assert(chip8->memory[chip8->index + 1] == 2);
+    assert(chip8->memory[chip8->index + 2] == 7);
    
     // LD [I], Vx
-    // TODO
+    chip8->index = 0x250;
+    chip8->inst = 0xFF55;
+    for (int i = V0; i <= VF; i++) {
+        chip8->registers[i] = 251;
+    }
+    chip8_op_fx55(chip8);
+    for (size_t i = 0x250; i <= (0x250 + VF); i++) {
+        assert(chip8->memory[i] == 251);
+    }
     
     // LD Vx, [I]
-    // TODO
+    chip8->index = 0x250;
+    chip8->inst = 0xFF65;
+    for (size_t i = 0x250; i <= (0x250 + VF); i++) {
+        chip8->memory[i] = 123;
+    }
+    chip8_op_fx65(chip8);
+    for (int i = V0; i <= VF; i++) {
+        assert(chip8->registers[i] == 123);
+    }
 }
 #endif
