@@ -265,15 +265,17 @@ void chip8_op_dxyn(struct Chip8 *chip8) {
         uint8_t sprite_byte = chip8->memory[chip8->index + row];
         for (size_t col = 0; col < 8; col++) {
             uint8_t pixel = sprite_byte & (0x80 >> col);
-            uint32_t *screen_pixel = &chip8->video[(y + row) * VIDEO_H + (x + col)];
+            uint32_t *screen_pixel = &chip8->video[(y + row) * VIDEO_W + (x + col)];
 
-            if (pixel && *screen_pixel == 0xFFFFFF) {
+            if (*screen_pixel == 0xFFFFFF) {
                 chip8->registers[VF] = 1;
             } else {
-
+                chip8->registers[VF] = 0;
             }
 
-            *screen_pixel  ^= 0xFFFFFF;
+            if (pixel) {
+                *screen_pixel  ^= 0xFFFFFFFF;
+            }
         }
     }
 }
@@ -364,9 +366,12 @@ void chip8_op_fx29(struct Chip8 *chip8) {
 void chip8_op_fx33(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
     uint8_t value = chip8->registers[Vx];
-    chip8->memory[chip8->index] = value % 1;
+
+    chip8->memory[chip8->index + 2] = value % 10;
+    value /= 10;
     chip8->memory[chip8->index + 1] = value % 10;
-    chip8->memory[chip8->index + 2] = value % 100;
+    value /= 10;
+    chip8->memory[chip8->index] = value % 10;
 }
 
 // LD [I], Vx
@@ -375,7 +380,7 @@ void chip8_op_fx33(struct Chip8 *chip8) {
 void chip8_op_fx55(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
 
-    for (uint8_t i = V0; i < Vx; i++) {
+    for (size_t i = V0; i <= Vx; i++) {
         chip8->memory[chip8->index + i] = chip8->registers[i];
     }
 }
@@ -386,7 +391,7 @@ void chip8_op_fx55(struct Chip8 *chip8) {
 void chip8_op_fx65(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst  & 0x0F00) >> 8;
 
-    for (uint8_t i = V0; i < Vx; i++) {
+    for (uint8_t i = V0; i <= Vx; i++) {
         chip8->registers[i] = chip8->memory[chip8->index + i];
     }
 }

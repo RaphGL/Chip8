@@ -55,11 +55,7 @@ void chip8_load_rom(struct Chip8 *chip8, const char *restrict filename) {
         exit(1);
     }
 
-    char byte = fgetc(rom);
-    for (int i = 0; byte != EOF; i++) {
-        chip8->memory[INSTADDR + i] = byte;
-        byte = fgetc(rom);
-    }
+    fread(chip8->memory + INSTADDR, MEMORYSIZ - INSTADDR, rom_size, rom);
 }
 
 void chip8_cycle(struct Chip8 *chip8) {
