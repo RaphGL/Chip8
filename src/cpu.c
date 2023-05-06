@@ -83,7 +83,7 @@ void chip8_cycle(struct Chip8 *chip8) {
     // the instructions are run at 500hz
     if (delta_inst > 1000/500.0) {
         start_500hz = end_time;
-        chip8->inst = (chip8->memory[chip8->pc] >> 8) | chip8->memory[chip8->pc + 1];
+        chip8->inst = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc + 1];
         chip8->pc += 2;
 
         // parses and runs instructions

@@ -13,7 +13,7 @@ int main(void)
     test_instructions(&chip8);
     // resets chip8 state after running tests
     chip8 = chip8_new();
-    chip8_load_rom(&chip8, "./test_opcode.ch8");
+    chip8_load_rom(&chip8, "./test_opcode8");
     #endif
 
     for (;;) {
