@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "cpu.h"
+#include "io.h"
 
 void test_instructions(struct Chip8 *chip8);
 
-int main(void)
-{
+int main(int argc, char **argv) {
     struct Chip8 chip8 = chip8_new();
     chip8_load_rom(&chip8, "./c8_test.ch8");
 
@@ -13,12 +13,17 @@ int main(void)
     test_instructions(&chip8);
     // resets chip8 state after running tests
     chip8 = chip8_new();
-    chip8_load_rom(&chip8, "./test_opcode8");
+    chip8_load_rom(&chip8, "./Landing.ch8");
     #endif
 
-    for (;;) {
+    chip8_init_video(&chip8);
+    chip8_init_input(&chip8);
+    chip8_init_audio(&chip8);
+
+    while (running) {
         chip8_cycle(&chip8);
     }
+
     return 0;
 }
 

@@ -267,7 +267,7 @@ void chip8_op_dxyn(struct Chip8 *chip8) {
             uint8_t pixel = sprite_byte & (0x80 >> col);
             uint32_t *screen_pixel = &chip8->video[(y + row) * VIDEO_W + (x + col)];
 
-            if (*screen_pixel == 0xFFFFFF) {
+            if (*screen_pixel == 0xFFFFFFFF) {
                 chip8->registers[VF] = 1;
             } else {
                 chip8->registers[VF] = 0;

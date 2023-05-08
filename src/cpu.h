@@ -1,6 +1,7 @@
-#ifndef CHIP8_MEMORY
-#define CHIP8_MEMORY
+#ifndef CHIP8_CPU
+#define CHIP8_CPU
 #include <stdint.h>
+#include <stdbool.h>
 
 enum Register {
     V0,
@@ -20,7 +21,6 @@ enum Register {
     VE,
     VF
 };
-
 
 // where all fonts are stored
 #define FONTADDR 0x050
