@@ -50,15 +50,24 @@ void chip8_quit_video(void) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+    video_thread = NULL;
+    renderer = NULL;
+    window = NULL;
 }
 
 void chip8_init_video(const struct Chip8 *chip8) {
     SDL_Init(SDL_INIT_VIDEO);
-    if (SDL_CreateWindowAndRenderer(WIN_W, WIN_H, SDL_WINDOW_SHOWN, &window, &renderer) < 0) {
+    window = SDL_CreateWindow("Chip8 Emulator",  SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_W, WIN_H, SDL_WINDOW_SHOWN);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!window) {
         fputs("Error: Couldn't create window.", stderr);
         exit(0);
     }
-    SDL_SetWindowTitle(window, "Chip8 Emulator");
+
+    if (!renderer) {
+        fputs("Error: Couldn't create renderer.", stderr);
+        exit(0);
+    }
 
     video_thread = SDL_CreateThread(chip8_video_draw, "chip8_video_draw", (void *)chip8->video);
     if (!video_thread) {
@@ -67,7 +76,7 @@ void chip8_init_video(const struct Chip8 *chip8) {
     }
 }
 
-int chip8_capture_input(void * arg) {
+static int chip8_capture_input(void * arg) {
     struct Chip8 *chip8 = arg;
     SDL_Event e;
 
@@ -220,6 +229,7 @@ int chip8_capture_input(void * arg) {
 
 void chip8_quit_input(void) {
     SDL_WaitThread(input_thread, NULL);
+    input_thread = NULL;
 }
 
 void chip8_init_input(struct Chip8 *chip8) {

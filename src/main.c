@@ -6,14 +6,19 @@
 void test_instructions(struct Chip8 *chip8);
 
 int main(int argc, char **argv) {
+    if (argc == 1) {
+        fputs("Error: No ROM was supplied.", stderr);
+        return 0;
+    }
+
     struct Chip8 chip8 = chip8_new();
-    chip8_load_rom(&chip8, "./c8_test.ch8");
+    chip8_load_rom(&chip8, argv[1]);
 
     #ifndef NDEBUG
     test_instructions(&chip8);
     // resets chip8 state after running tests
     chip8 = chip8_new();
-    chip8_load_rom(&chip8, "./Landing.ch8");
+    chip8_load_rom(&chip8, argv[1]);
     #endif
 
     chip8_init_video(&chip8);
@@ -24,6 +29,8 @@ int main(int argc, char **argv) {
         chip8_cycle(&chip8);
     }
 
+    chip8_quit_input();
+    chip8_quit_video();
     return 0;
 }
 
