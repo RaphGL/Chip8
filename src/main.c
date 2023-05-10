@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
     }
 
     chip8_quit_input();
+    chip8_quit_audio();
     chip8_quit_video();
     return 0;
 }

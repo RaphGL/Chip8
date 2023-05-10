@@ -4,9 +4,11 @@ project(
   version: '1.2'
 )
 
+cc = meson.get_compiler('c')
+
 deps = [
   dependency('sdl2'),
-  dependency('SDL2_ttf')
+  cc.find_library('m')
 ]
 
 executable(
