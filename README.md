@@ -4,12 +4,17 @@ A Chip8 Emulator written in C11.
 Note: This emulator implements all of Chip8's spec. While it can display video, play audio and generally works, it has not been tested and polished enough, so bugs should be expected on some roms.
 
 ## Installation
-This project uses Meson as it's build system. In case you don't have it installed make sure to install meson (and ninja if it's not installed by your package manager).
-
+Using meson (preferred):
 ```sh
-$ meson configure build -Dbuildtype
+$ meson configure build -Dbuildtype=release
 $ meson compile -C build
 ```
+
+YOLO:
+```sh
+$ gcc -lm -lSDL2 -std=c11 -O2 src/*.c -o chip8
+```
+
 
 ## Usage
 ```sh
