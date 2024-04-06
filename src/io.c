@@ -10,14 +10,11 @@
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
-static SDL_Thread *input_thread = NULL;
-static SDL_Thread *audio_thread = NULL;
-
-// should only be modified by the input thread
+// should only be modified by the input
 _Atomic(bool) running = true;
 
-void chip8_video_draw(void *video_buf) {
-    uint32_t *video = video_buf;
+void chip8_video_draw(struct Chip8 *const chip8) {
+    uint32_t *video = chip8->video;
 
     SDL_Rect pixel = {
         .h = WIN_W / VIDEO_W,
@@ -65,160 +62,149 @@ void chip8_init_video(const struct Chip8 *chip8) {
     }
 }
 
-static int chip8_capture_input(void * arg) {
-    struct Chip8 *chip8 = arg;
+void chip8_capture_input(struct Chip8 *chip8) {
     SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) {
+            running = false;
+        }
 
-    while (running) {
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) {
-                running = false;
+        if (e.type == SDL_KEYDOWN) {
+            switch (e.key.keysym.sym) {
+                case SDLK_x:
+                    chip8->keypad[0] = 1;
+                break;
+
+                case SDLK_1:
+                    chip8->keypad[1] = 1;
+                break;
+
+                case SDLK_2:
+                    chip8->keypad[2] = 1;
+                break;
+
+                case SDLK_3:
+                    chip8->keypad[3] = 1;
+                break;
+
+                case SDLK_q:
+                    chip8->keypad[4] = 1;
+                break;
+
+                case SDLK_w:
+                    chip8->keypad[5] = 1;
+                break;
+
+                case SDLK_e:
+                    chip8->keypad[6] = 1;
+                break;
+
+                case SDLK_a:
+                    chip8->keypad[7] = 1;
+                break;
+
+                case SDLK_s:
+                    chip8->keypad[8] = 1;
+                break;
+
+                case SDLK_d:
+                    chip8->keypad[9] = 1;
+                break;
+
+                case SDLK_z:
+                    chip8->keypad[0xA] = 1;
+                break;
+
+                case SDLK_c:
+                    chip8->keypad[0xB] = 1;
+                break;
+
+                case SDLK_4:
+                    chip8->keypad[0xC] = 1;
+                break;
+
+                case SDLK_r:
+                    chip8->keypad[0xD] = 1;
+                break;
+
+                case SDLK_f:
+                    chip8->keypad[0xE] = 1;
+                break;
+
+                case SDLK_v:
+                    chip8->keypad[0xF] = 1;
+                break;
             }
-            
-            if (e.type == SDL_KEYDOWN) {
-                switch (e.key.keysym.sym) {
-                    case SDLK_x:
-                        chip8->keypad[0] = 1;
-                    break;
+        }
 
-                    case SDLK_1:
-                        chip8->keypad[1] = 1;
-                    break;
+        if (e.type == SDL_KEYUP) {
+            switch (e.key.keysym.sym) {
+                case SDLK_x:
+                    chip8->keypad[0] = 0;
+                break;
 
-                    case SDLK_2:
-                        chip8->keypad[2] = 1;
-                    break;
+                case SDLK_1:
+                    chip8->keypad[1] = 0;
+                break;
 
-                    case SDLK_3:
-                        chip8->keypad[3] = 1;
-                    break;
+                case SDLK_2:
+                    chip8->keypad[2] = 0;
+                break;
 
-                    case SDLK_q:
-                        chip8->keypad[4] = 1;
-                    break;
+                case SDLK_3:
+                    chip8->keypad[3] = 0;
+                break;
 
-                    case SDLK_w:
-                        chip8->keypad[5] = 1;
-                    break;
+                case SDLK_q:
+                    chip8->keypad[4] = 0;
+                break;
 
-                    case SDLK_e:
-                        chip8->keypad[6] = 1;
-                    break;
+                case SDLK_w:
+                    chip8->keypad[5] = 0;
+                break;
 
-                    case SDLK_a:
-                        chip8->keypad[7] = 1;
-                    break;
+                case SDLK_e:
+                    chip8->keypad[6] = 0;
+                break;
 
-                    case SDLK_s:
-                        chip8->keypad[8] = 1;
-                    break;
+                case SDLK_a:
+                    chip8->keypad[7] = 0;
+                break;
 
-                    case SDLK_d:
-                        chip8->keypad[9] = 1;
-                    break;
+                case SDLK_s:
+                    chip8->keypad[8] = 0;
+                break;
 
-                    case SDLK_z:
-                        chip8->keypad[0xA] = 1;
-                    break;
+                case SDLK_d:
+                    chip8->keypad[9] = 0;
+                break;
 
-                    case SDLK_c:
-                        chip8->keypad[0xB] = 1;
-                    break;
+                case SDLK_z:
+                    chip8->keypad[0xA] = 0;
+                break;
 
-                    case SDLK_4:
-                        chip8->keypad[0xC] = 1;
-                    break;
+                case SDLK_c:
+                    chip8->keypad[0xB] = 0;
+                break;
 
-                    case SDLK_r:
-                        chip8->keypad[0xD] = 1;
-                    break;
+                case SDLK_4:
+                    chip8->keypad[0xC] = 0;
+                break;
 
-                    case SDLK_f:
-                        chip8->keypad[0xE] = 1;
-                    break;
+                case SDLK_r:
+                    chip8->keypad[0xD] = 0;
+                break;
 
-                    case SDLK_v:
-                        chip8->keypad[0xF] = 1;
-                    break;
-                }
-            }
+                case SDLK_f:
+                    chip8->keypad[0xE] = 0;
+                break;
 
-            if (e.type == SDL_KEYUP) {
-                switch (e.key.keysym.sym) {
-                    case SDLK_x:
-                        chip8->keypad[0] = 0;
-                    break;
-
-                    case SDLK_1:
-                        chip8->keypad[1] = 0;
-                    break;
-
-                    case SDLK_2:
-                        chip8->keypad[2] = 0;
-                    break;
-
-                    case SDLK_3:
-                        chip8->keypad[3] = 0;
-                    break;
-
-                    case SDLK_q:
-                        chip8->keypad[4] = 0;
-                    break;
-
-                    case SDLK_w:
-                        chip8->keypad[5] = 0;
-                    break;
-
-                    case SDLK_e:
-                        chip8->keypad[6] = 0;
-                    break;
-
-                    case SDLK_a:
-                        chip8->keypad[7] = 0;
-                    break;
-
-                    case SDLK_s:
-                        chip8->keypad[8] = 0;
-                    break;
-
-                    case SDLK_d:
-                        chip8->keypad[9] = 0;
-                    break;
-
-                    case SDLK_z:
-                        chip8->keypad[0xA] = 0;
-                    break;
-
-                    case SDLK_c:
-                        chip8->keypad[0xB] = 0;
-                    break;
-
-                    case SDLK_4:
-                        chip8->keypad[0xC] = 0;
-                    break;
-
-                    case SDLK_r:
-                        chip8->keypad[0xD] = 0;
-                    break;
-
-                    case SDLK_f:
-                        chip8->keypad[0xE] = 0;
-                    break;
-
-                    case SDLK_v:
-                        chip8->keypad[0xF] = 0;
-                    break;
-                }
+                case SDLK_v:
+                    chip8->keypad[0xF] = 0;
+                break;
             }
         }
     }
-
-    return 0;
-}
-
-void chip8_quit_input(void) {
-    SDL_WaitThread(input_thread, NULL);
-    input_thread = NULL;
 }
 
 void chip8_init_input(struct Chip8 *chip8) {
@@ -226,25 +212,14 @@ void chip8_init_input(struct Chip8 *chip8) {
         fputs("Error: Could not initialize SDL events.", stderr);
         exit(1);
     }
-
-    input_thread = SDL_CreateThread(chip8_capture_input, "chip8_capture_input", chip8);
-    if (!input_thread) {
-        fputs("Error: Could not create input thread.", stderr);
-        exit(1);
-    }
 }
 
-static int chip8_play_audio(void *arg) {
-    struct Chip8 *chip8 = arg;
-    while (running) {
-        if (chip8->sound_timer > 0) {
-            SDL_PauseAudio(0);
-        } else {
-            SDL_PauseAudio(1);
-        }
+void chip8_play_audio(struct Chip8 *const chip8) {
+    if (chip8->sound_timer > 0) {
+        SDL_PauseAudio(0);
+    } else {
+        SDL_PauseAudio(1);
     }
-
-    return 0;
 }
 
 #define AMPLITUDE 28000
@@ -263,7 +238,6 @@ static void chip8_audio_callback(void *userdata, uint8_t *raw_buffer, int bytes)
 }
 
 void chip8_quit_audio(void) {
-    SDL_WaitThread(audio_thread, NULL);
     SDL_CloseAudio();
 }
 
@@ -291,6 +265,4 @@ void chip8_init_audio(const struct Chip8 *chip8) {
         fputs("Error: Didn't receive the correct audio format from SDL.", stderr);
         exit(1);
     }
-
-    audio_thread = SDL_CreateThread(chip8_play_audio, "chip8_play_audio", (void *)chip8);
 }

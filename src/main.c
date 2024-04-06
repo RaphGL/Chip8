@@ -1,9 +1,19 @@
 #include <stdio.h>
-#include <string.h>
+#include "SDL_thread.h"
 #include "cpu.h"
 #include "io.h"
 
 void test_instructions(struct Chip8 *chip8);
+
+int run_chip8_subsystems(void *data) {
+    struct Chip8 *chip8 = data;
+    while (running) {
+        chip8_cycle(chip8);
+        chip8_capture_input(chip8);
+        chip8_play_audio(chip8);
+    }
+    return 0;
+}
 
 int main(int argc, char **argv) {
     if (argc == 1) {
@@ -25,12 +35,13 @@ int main(int argc, char **argv) {
     chip8_init_input(&chip8);
     chip8_init_audio(&chip8);
 
+   SDL_Thread *sub_thread = SDL_CreateThread(run_chip8_subsystems, "run_chip8_subsystems", &chip8);
+
     while (running) {
-        chip8_cycle(&chip8);
-        chip8_video_draw(chip8.video);
+        chip8_video_draw(&chip8);
     }
 
-    chip8_quit_input();
+    SDL_WaitThread(sub_thread, NULL);
     chip8_quit_audio();
     chip8_quit_video();
     return 0;

@@ -65,7 +65,6 @@ uint64_t start_500hz = 0;
 uint64_t start_60hz = 0;
 
 void chip8_cycle(struct Chip8 *chip8) {
-    end_time = SDL_GetPerformanceCounter();
     float delta_inst = (end_time - start_500hz) / (float)SDL_GetPerformanceFrequency() * 1000.0;
     float delta_timer = (end_time - start_60hz) / (float)SDL_GetPerformanceFrequency() * 1000.0;
 
@@ -209,4 +208,5 @@ void chip8_cycle(struct Chip8 *chip8) {
             break;
         }
     }
+    end_time = SDL_GetPerformanceCounter();
 }
