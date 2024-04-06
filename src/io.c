@@ -10,49 +10,42 @@
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
-static SDL_Thread *video_thread = NULL;
 static SDL_Thread *input_thread = NULL;
 static SDL_Thread *audio_thread = NULL;
 
 // should only be modified by the input thread
 _Atomic(bool) running = true;
 
-static int chip8_video_draw(void *video_buf) {
+void chip8_video_draw(void *video_buf) {
     uint32_t *video = video_buf;
 
-    while (running) {
-        SDL_Rect pixel = {
-            .h = WIN_W / VIDEO_W,
-            .w = WIN_H / VIDEO_H,
-        };
-        for (size_t y = 0; y < VIDEO_H; y++) {
-            for (size_t x = 0; x < VIDEO_W;  x++) {
-                pixel.x = x * pixel.w;
-                pixel.y = y * pixel.h;
+    SDL_Rect pixel = {
+        .h = WIN_W / VIDEO_W,
+        .w = WIN_H / VIDEO_H,
+    };
+    for (size_t y = 0; y < VIDEO_H; y++) {
+        for (size_t x = 0; x < VIDEO_W;  x++) {
+            pixel.x = x * pixel.w;
+            pixel.y = y * pixel.h;
 
-                uint32_t vid_pixel = video[y * VIDEO_W + x];
-                if (vid_pixel == 0xFFFFFFFF) {
-                    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-                } else {
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
-                }
-
-                SDL_RenderFillRect(renderer, &pixel);
+            uint32_t vid_pixel = video[y * VIDEO_W + x];
+            if (vid_pixel == 0xFFFFFFFF) {
+                SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+            } else {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
             }
-        }
 
-        SDL_RenderPresent(renderer);
+            SDL_RenderFillRect(renderer, &pixel);
+        }
     }
 
-    return 0;
+    SDL_RenderPresent(renderer);
 }
 
 void chip8_quit_video(void) {
-    SDL_WaitThread(video_thread, NULL);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    video_thread = NULL;
     renderer = NULL;
     window = NULL;
 }
@@ -68,12 +61,6 @@ void chip8_init_video(const struct Chip8 *chip8) {
 
     if (!renderer) {
         fputs("Error: Couldn't create renderer.", stderr);
-        exit(1);
-    }
-
-    video_thread = SDL_CreateThread(chip8_video_draw, "chip8_video_draw", (void *)chip8->video);
-    if (!video_thread) {
-        fputs("Error: Could not create video thread.", stderr);
         exit(1);
     }
 }

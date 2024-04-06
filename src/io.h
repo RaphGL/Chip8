@@ -5,6 +5,7 @@
 extern _Atomic(bool) running;
 
 void chip8_init_video(const struct Chip8 *chip8);
+int chip8_video_draw(void *video_buf);
 void chip8_quit_video(void);
 
 void chip8_init_audio(const struct Chip8 *chip8);

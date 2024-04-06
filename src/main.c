@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
 
     while (running) {
         chip8_cycle(&chip8);
+        chip8_video_draw(chip8.video);
     }
 
     chip8_quit_input();
