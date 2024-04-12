@@ -34,8 +34,10 @@ void chip8_op_2nnn(struct Chip8 *chip8) {
 }
 
 // SE Vx, byte
-// Skip next instruction if Vx = kk
-// Increments PC by 2 if equal
+// Skip next instruction if Vx = kk.
+
+// The interpreter compares register Vx to kk, and if they are equal, increments the program counter by 2.
+
 void chip8_op_3xkk(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
     uint8_t kk = chip8->inst & 0x00FF;
@@ -134,13 +136,8 @@ void chip8_op_8xy4(struct Chip8 *chip8) {
     uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
     int sum = chip8->registers[Vx] + chip8->registers[Vy];
-    if (sum > 255) {
-        chip8->registers[VF] = 1;
-    } else {
-        chip8->registers[VF] = 0;
-    }
-
     chip8->registers[Vx] = sum & 0xFF;
+    chip8->registers[VF] = sum > 255 ? 1 : 0;
 }
 
 // SUB Vx, Vy
@@ -150,13 +147,8 @@ void chip8_op_8xy5(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
     uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
-    if (chip8->registers[Vx] > chip8->registers[Vy]) {
-        chip8->registers[VF] = 1;
-    } else {
-        chip8->registers[VF] = 0;
-    }
-
     chip8->registers[Vx] -= chip8->registers[Vy];
+    chip8-> registers[VF] = chip8->registers[Vx] > chip8->registers[Vy] ? 1 : 0;
 }
 
 // SHR Vx, {, Vy}
@@ -166,13 +158,8 @@ void chip8_op_8xy6(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
     // uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
-    if (chip8->registers[Vx] & 1) {
-        chip8->registers[VF] = 1;
-    } else {
-        chip8->registers[VF] = 0;
-    }
-
     chip8->registers[Vx] >>= 1;
+    chip8-> registers[VF] = chip8->registers[Vx] & 1 ? 1 : 0;
 }
 
 // SUBN Vx, Vy
@@ -182,13 +169,8 @@ void chip8_op_8xy7(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
     uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
-    if (chip8->registers[Vy] > chip8->registers[Vx]) {
-        chip8->registers[VF] = 1;
-    } else {
-        chip8->registers[VF] = 0;
-    }
-
     chip8->registers[Vx] = chip8->registers[Vy] - chip8->registers[Vx];
+    chip8-> registers[VF] = chip8->registers[Vy] > chip8->registers[Vx] ? 1 : 0;
 }
 
 // SHL Vx {, Vy}
@@ -198,13 +180,8 @@ void chip8_op_8xye(struct Chip8 *chip8) {
     uint8_t Vx = (chip8->inst & 0x0F00) >> 8;
     // uint8_t Vy = (chip8->inst & 0x00F0) >> 4;
 
-    if (chip8->registers[Vx] & 1) {
-        chip8->registers[VF] = 1;
-    } else {
-        chip8->registers[VF] = 0;
-    }
-
     chip8->registers[Vx] <<= 1;
+    chip8-> registers[VF] = chip8->registers[Vx] & 1 ? 1 : 0;
 }
 
 // SNE Vx, Vy
@@ -267,15 +244,11 @@ void chip8_op_dxyn(struct Chip8 *chip8) {
             uint8_t pixel = sprite_byte & (0x80 >> col);
             uint32_t *screen_pixel = &chip8->video[(y + row) * VIDEO_W + (x + col)];
 
-            if (*screen_pixel == 0xFFFFFFFF) {
-                chip8->registers[VF] = 1;
-            } else {
-                chip8->registers[VF] = 0;
-            }
-
             if (pixel) {
                 *screen_pixel  ^= 0xFFFFFFFF;
             }
+
+            chip8->registers[VF] = *screen_pixel == 0xFFFFFFFF ? 1 : 0;
         }
     }
 }
